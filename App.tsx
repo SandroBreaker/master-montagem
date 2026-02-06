@@ -27,7 +27,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  if (!user) return <Navigate to="/auth" replace />;
+  // Verifica se há um usuário real ou um usuário "Mock" no localStorage
+  const mockUser = localStorage.getItem('master_admin_mock_user');
+  if (!user && !mockUser) return <Navigate to="/auth" replace />;
+  
   return <>{children}</>;
 };
 
@@ -38,12 +41,19 @@ const App: React.FC = () => {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        // Fix: Use 'as any' to bypass missing 'getSession' property error in current type definitions
+        // Tenta pegar a sessão real
         const { data: { session }, error } = await (supabase.auth as any).getSession();
-        if (error) throw error;
-        setUser(session?.user ?? null);
+        if (session) {
+          setUser(session.user);
+        } else {
+          // Se não tiver sessão real, verifica se existe o bypass de hardcode
+          const mockUser = localStorage.getItem('master_admin_mock_user');
+          if (mockUser) setUser(JSON.parse(mockUser));
+        }
       } catch (err) {
-        console.warn("Aviso: Falha ao verificar sessão inicial. Verifique as chaves do Supabase.", err);
+        console.warn("Aviso: Falha ao verificar sessão inicial. Usando modo de segurança.", err);
+        const mockUser = localStorage.getItem('master_admin_mock_user');
+        if (mockUser) setUser(JSON.parse(mockUser));
       } finally {
         setLoading(false);
       }
@@ -51,9 +61,13 @@ const App: React.FC = () => {
 
     checkUser();
 
-    // Fix: Use 'as any' to bypass missing 'onAuthStateChange' property error in current type definitions
     const { data: { subscription } } = (supabase.auth as any).onAuthStateChange((_event: any, session: any) => {
-      setUser(session?.user ?? null);
+      if (session) {
+        setUser(session.user);
+      } else {
+        const mockUser = localStorage.getItem('master_admin_mock_user');
+        setUser(mockUser ? JSON.parse(mockUser) : null);
+      }
       setLoading(false);
     });
 
@@ -66,13 +80,8 @@ const App: React.FC = () => {
     <AuthContext.Provider value={{ user, loading }}>
       <HashRouter>
         <Routes>
-          {/* Rota Raiz */}
           <Route path="/" element={<LandingPage />} />
-          
-          {/* Autenticação */}
           <Route path="/auth" element={<AuthPage />} />
-          
-          {/* Dashboard Protegido */}
           <Route 
             path="/admin/*" 
             element={
@@ -81,8 +90,6 @@ const App: React.FC = () => {
               </ProtectedRoute>
             } 
           />
-          
-          {/* Catch-all: Redireciona qualquer rota inexistente para a Home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </HashRouter>
