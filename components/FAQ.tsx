@@ -84,7 +84,7 @@ const FAQ: React.FC = () => {
           <div className="mt-12 text-center">
             <p className="text-slate-500 mb-6 font-medium">Ainda tem dúvidas? Fale direto conosco agora mesmo.</p>
             <a 
-              href="https://wa.me/5500000000000" 
+              href="https://wa.me/5511968036476" 
               className="text-amber-600 font-black uppercase tracking-widest text-sm hover:underline"
             >
               Conversar no WhatsApp →

@@ -15,7 +15,7 @@ const WhatsAppButton: React.FC = () => {
       className="fixed bottom-6 right-6 z-50"
     >
       <a 
-        href="https://wa.me/5500000000000" 
+        href="https://wa.me/5511968036476" 
         target="_blank" 
         rel="noopener noreferrer"
         className="group flex items-center gap-3 active:scale-90 transition-transform"

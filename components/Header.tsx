@@ -54,7 +54,7 @@ const Header: React.FC = () => {
             </a>
           ))}
           <a 
-            href="https://wa.me/5500000000000" 
+            href="https://wa.me/5511968036476" 
             target="_blank" 
             className="relative overflow-hidden group bg-amber-500 hover:bg-amber-400 text-slate-950 px-8 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl shadow-amber-500/10 hover:shadow-amber-500/30 active:scale-95"
           >

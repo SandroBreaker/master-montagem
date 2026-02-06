@@ -45,7 +45,7 @@ const Hero: React.FC = () => {
 
             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-8 mb-16">
               <a 
-                href="https://wa.me/5500000000000" 
+                href="https://wa.me/5511968036476" 
                 target="_blank"
                 className="group relative bg-amber-500 hover:bg-amber-400 text-slate-950 px-10 py-5 rounded-[1.5rem] font-black text-lg flex items-center justify-center gap-4 transition-all hover:scale-[1.05] active:scale-95 shadow-2xl shadow-amber-500/20"
               >
