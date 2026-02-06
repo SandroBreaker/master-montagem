@@ -2,7 +2,7 @@
 import { supabase } from './supabaseClient';
 
 export const trackAndRedirect = async (clientName: string, serviceType: string) => {
-  const phone = '5511900000000'; // Número do montador
+  const phone = '5511968036476'; // Número do montador
   const message = `Olá! Vi seu site e gostaria de um orçamento para: ${serviceType}. Meu nome é ${clientName}.`;
   
   try {
