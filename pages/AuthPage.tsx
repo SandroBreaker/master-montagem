@@ -17,19 +17,29 @@ const AuthPage: React.FC = () => {
     setError('');
 
     try {
-      // Fix: Use 'as any' to bypass missing 'signInWithPassword' property error in current type definitions
-      const { error: authError } = await (supabase.auth as any).signInWithPassword({
+      // Tenta realizar o login
+      const { data, error: authError } = await (supabase.auth as any).signInWithPassword({
         email,
         password,
       });
 
       if (authError) {
-        setError('Credenciais inválidas ou erro de acesso.');
-      } else {
+        console.error("Erro detalhado do Supabase:", authError);
+        
+        // Mensagens mais amigáveis baseadas no erro real
+        if (authError.message.includes('Email not confirmed')) {
+          setError('Você precisa confirmar seu e-mail antes de acessar.');
+        } else if (authError.message.includes('Invalid login credentials')) {
+          setError('E-mail ou senha incorretos.');
+        } else {
+          setError(authError.message);
+        }
+      } else if (data.user) {
         navigate('/admin');
       }
-    } catch (err) {
-      setError('Ocorreu um erro inesperado.');
+    } catch (err: any) {
+      console.error("Erro de conexão/rede:", err);
+      setError('Erro de conexão com o servidor. Verifique se o projeto está ativo.');
     } finally {
       setLoading(false);
     }
@@ -74,7 +84,7 @@ const AuthPage: React.FC = () => {
 
           {error && (
             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-              <p className="text-red-400 text-[10px] font-black text-center uppercase tracking-tighter">{error}</p>
+              <p className="text-red-400 text-[10px] font-black text-center uppercase tracking-tighter leading-tight">{error}</p>
             </div>
           )}
 
