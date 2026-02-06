@@ -51,11 +51,11 @@ const Footer: React.FC<FooterProps> = ({ onOpenBundler }) => {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <Phone size={18} className="text-amber-500 mt-1 shrink-0" />
-                <span className="hover:text-amber-500 transition-colors cursor-pointer active:scale-[0.98] inline-block">(11) 98765-4321</span>
+                <span className="hover:text-amber-500 transition-colors cursor-pointer active:scale-[0.98] inline-block">(11) 96803-6476</span>
               </li>
               <li className="flex items-start gap-3">
                 <Mail size={18} className="text-amber-500 mt-1 shrink-0" />
-                <span className="break-all hover:text-amber-500 transition-colors cursor-pointer active:scale-[0.98] inline-block">contato@mastermontagem.com.br</span>
+                <span className="break-all hover:text-amber-500 transition-colors cursor-pointer active:scale-[0.98] inline-block">carlos.montomoveis@gmail.com</span>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin size={18} className="text-amber-500 mt-1 shrink-0" />
