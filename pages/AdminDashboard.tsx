@@ -27,18 +27,23 @@ const AdminDashboard: React.FC = () => {
 
   const fetchContent = async () => {
     setLoading(true);
-    const [leadsRes, servicesRes, portfolioRes] = await Promise.all([
-      supabase.from('leads').select('*').order('created_at', { ascending: false }),
-      supabase.from('services').select('*').order('order_index', { ascending: true }),
-      supabase.from('portfolio_items').select('*').order('order_index', { ascending: true })
-    ]);
+    try {
+      const [leadsRes, servicesRes, portfolioRes] = await Promise.all([
+        supabase.from('leads').select('*').order('created_at', { ascending: false }),
+        supabase.from('services').select('*').order('order_index', { ascending: true }),
+        supabase.from('portfolio_items').select('*').order('order_index', { ascending: true })
+      ]);
 
-    setData({
-      leads: leadsRes.data || [],
-      services: servicesRes.data || [],
-      portfolio: portfolioRes.data || []
-    });
-    setLoading(false);
+      setData({
+        leads: leadsRes.data || [],
+        services: servicesRes.data || [],
+        portfolio: portfolioRes.data || []
+      });
+    } catch (err) {
+      console.error("Erro ao carregar dados do banco:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (table: string, id: string) => {
@@ -52,7 +57,6 @@ const AdminDashboard: React.FC = () => {
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const payload: any = Object.fromEntries(formData.entries());
     
-    // Adiciona a URL da imagem se for portfólio
     if (activeTab === 'portfolio') {
       payload.image_url = uploadedImageUrl || editingItem?.image_url;
       if (!payload.image_url) {
@@ -76,7 +80,10 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    // Limpa tanto a sessão real quanto o bypass
+    localStorage.removeItem('master_admin_mock_user');
     await (supabase.auth as any).signOut();
+    window.location.reload(); // Força o redirecionamento via App.tsx
   };
 
   return (
@@ -150,21 +157,29 @@ const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {data.leads.map((lead) => (
-                    <tr key={lead.id} className="hover:bg-white/[0.03]">
-                      <td className="px-10 py-8">
-                        <p className="font-black">{lead.client_name}</p>
-                        <p className="text-[10px] text-slate-500 uppercase">{lead.whatsapp}</p>
-                      </td>
-                      <td className="px-10 py-8 text-sm text-slate-300">{lead.service_type}</td>
-                      <td className="px-10 py-8">
-                        <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${lead.status === 'novo' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>{lead.status}</span>
-                      </td>
-                      <td className="px-10 py-8 text-right">
-                         <button onClick={() => handleDelete('leads', lead.id)} className="p-2 text-slate-500 hover:text-red-500"><Trash2 size={18} /></button>
+                  {data.leads.length > 0 ? (
+                    data.leads.map((lead) => (
+                      <tr key={lead.id} className="hover:bg-white/[0.03]">
+                        <td className="px-10 py-8">
+                          <p className="font-black">{lead.client_name}</p>
+                          <p className="text-[10px] text-slate-500 uppercase">{lead.whatsapp}</p>
+                        </td>
+                        <td className="px-10 py-8 text-sm text-slate-300">{lead.service_type}</td>
+                        <td className="px-10 py-8">
+                          <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${lead.status === 'novo' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>{lead.status}</span>
+                        </td>
+                        <td className="px-10 py-8 text-right">
+                           <button onClick={() => handleDelete('leads', lead.id)} className="p-2 text-slate-500 hover:text-red-500"><Trash2 size={18} /></button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="px-10 py-20 text-center text-slate-600 font-bold uppercase tracking-widest text-xs">
+                        Nenhum lead encontrado ou erro na conexão com o banco.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             )}
