@@ -102,7 +102,7 @@ const AdminDashboard: React.FC = () => {
       
     } catch (err: any) {
       console.error("Erro ao salvar:", err);
-      alert(`Não foi possível salvar: ${err.message}. \n\nSe você estiver usando o modo de demonstração (Login Hardcoded), as gravações no banco de dados são bloqueadas por segurança.`);
+      alert(`Não foi possível salvar: ${err.message}`);
     } finally {
       setSaving(false);
     }
