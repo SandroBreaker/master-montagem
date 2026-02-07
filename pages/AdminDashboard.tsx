@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, Briefcase, Settings, LogOut, Plus, 
   TrendingUp, CheckCircle2, MessageSquare, Search, Bell, 
-  Image as ImageIcon, Wrench, Trash2, Edit3, X, Save
+  Image as ImageIcon, Wrench, Trash2, Edit3, X, Save, Loader2
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import ImageUpload from '../components/ImageUpload';
@@ -20,6 +20,7 @@ const AdminDashboard: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchContent();
@@ -48,35 +49,63 @@ const AdminDashboard: React.FC = () => {
 
   const handleDelete = async (table: string, id: string) => {
     if (!confirm('Tem certeza que deseja excluir este item?')) return;
-    const { error } = await supabase.from(table).delete().eq('id', id);
-    if (!error) fetchContent();
+    
+    try {
+      const { error } = await supabase.from(table).delete().eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      fetchContent();
+    } catch (err: any) {
+      alert(`Erro ao excluir: ${err.message || 'Verifique suas permissões.'}`);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget as HTMLFormElement);
-    const payload: any = Object.fromEntries(formData.entries());
+    setSaving(true);
     
-    if (activeTab === 'portfolio') {
-      payload.image_url = uploadedImageUrl || editingItem?.image_url;
-      if (!payload.image_url) {
-        alert('Por favor, faça upload de uma imagem.');
-        return;
+    try {
+      const formData = new FormData(e.currentTarget as HTMLFormElement);
+      const payload: any = Object.fromEntries(formData.entries());
+      
+      if (activeTab === 'portfolio') {
+        // Usa a URL recém uploadada OU a URL antiga se estiver editando e não trocou a imagem
+        payload.image_url = uploadedImageUrl || editingItem?.image_url;
+        
+        if (!payload.image_url) {
+          alert('Por favor, faça upload de uma imagem ou aguarde o término do envio.');
+          setSaving(false);
+          return;
+        }
       }
+      
+      const table = activeTab === 'services' ? 'services' : 'portfolio_items';
+      let error = null;
+      
+      if (editingItem?.id) {
+        const res = await supabase.from(table).update(payload).eq('id', editingItem.id);
+        error = res.error;
+      } else {
+        const res = await supabase.from(table).insert([payload]);
+        error = res.error;
+      }
+
+      if (error) throw error;
+      
+      setIsModalOpen(false);
+      setEditingItem(null);
+      setUploadedImageUrl('');
+      fetchContent();
+      
+    } catch (err: any) {
+      console.error("Erro ao salvar:", err);
+      alert(`Não foi possível salvar: ${err.message}. \n\nSe você estiver usando o modo de demonstração (Login Hardcoded), as gravações no banco de dados são bloqueadas por segurança.`);
+    } finally {
+      setSaving(false);
     }
-    
-    const table = activeTab === 'services' ? 'services' : 'portfolio_items';
-    
-    if (editingItem?.id) {
-      await supabase.from(table).update(payload).eq('id', editingItem.id);
-    } else {
-      await supabase.from(table).insert([payload]);
-    }
-    
-    setIsModalOpen(false);
-    setEditingItem(null);
-    setUploadedImageUrl('');
-    fetchContent();
   };
 
   const handleLogout = async () => {
@@ -84,6 +113,12 @@ const AdminDashboard: React.FC = () => {
     localStorage.removeItem('master_admin_mock_user');
     await (supabase.auth as any).signOut();
     window.location.reload(); // Força o redirecionamento via App.tsx
+  };
+
+  const openModal = (item?: any) => {
+    setEditingItem(item || null);
+    setUploadedImageUrl(item?.image_url || '');
+    setIsModalOpen(true);
   };
 
   return (
@@ -132,7 +167,7 @@ const AdminDashboard: React.FC = () => {
           </div>
           {activeTab !== 'leads' && (
             <button 
-              onClick={() => { setEditingItem(null); setUploadedImageUrl(''); setIsModalOpen(true); }}
+              onClick={() => openModal()}
               className="bg-amber-500 text-slate-950 px-8 py-4 rounded-2xl font-black flex items-center gap-3 hover:scale-105 transition-all shadow-xl shadow-amber-500/20 uppercase text-xs tracking-widest"
             >
               <Plus size={20} /> Adicionar {activeTab === 'services' ? 'Serviço' : 'Projeto'}
@@ -198,11 +233,7 @@ const AdminDashboard: React.FC = () => {
                     <p className="text-sm text-slate-500 mb-6 line-clamp-2 flex-grow">{item.description || item.category}</p>
                     <div className="flex justify-end gap-3 border-t border-white/5 pt-4">
                       <button 
-                        onClick={() => { 
-                          setEditingItem(item); 
-                          setUploadedImageUrl(item.image_url || '');
-                          setIsModalOpen(true); 
-                        }}
+                        onClick={() => openModal(item)}
                         className="p-3 bg-white/5 hover:bg-amber-500 hover:text-slate-950 rounded-xl transition-all"
                       >
                         <Edit3 size={18} />
@@ -262,8 +293,20 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 )}
                 
-                <button type="submit" className="w-full bg-amber-500 text-slate-950 py-5 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-amber-500/20 hover:scale-[1.02] transition-transform">
-                  <Save size={18} /> Salvar Alterações
+                <button 
+                  type="submit" 
+                  disabled={saving}
+                  className="w-full bg-amber-500 text-slate-950 py-5 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-amber-500/20 hover:scale-[1.02] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" /> Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={18} /> Salvar Alterações
+                    </>
+                  )}
                 </button>
               </form>
             </motion.div>
