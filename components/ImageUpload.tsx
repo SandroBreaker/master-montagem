@@ -57,9 +57,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUploadSuccess, defaultImage
       onUploadSuccess(publicUrl);
     } catch (err: any) {
       console.error('Erro no upload:', err);
-      setError('Falha ao processar o upload. Tente novamente.');
+      const errorMessage = err.message === 'The resource was not found' 
+        ? 'Bucket "portfolio" não encontrado. Verifique seu Supabase.' 
+        : err.message || 'Falha ao processar o upload.';
+      
+      setError(errorMessage);
+      onUploadSuccess(''); // Limpa URL em caso de erro
     } finally {
       setIsUploading(false);
+      // Reset input para permitir selecionar o mesmo arquivo se der erro
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -91,8 +98,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUploadSuccess, defaultImage
           </>
         ) : (
           <div 
-            onClick={() => fileInputRef.current?.click()}
-            className="cursor-pointer flex flex-col items-center gap-4 p-8 text-center group"
+            onClick={() => !isUploading && fileInputRef.current?.click()}
+            className={`cursor-pointer flex flex-col items-center gap-4 p-8 text-center group ${isUploading ? 'pointer-events-none' : ''}`}
           >
             <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center group-hover:bg-amber-500 group-hover:scale-110 transition-all duration-500">
               {isUploading ? (
@@ -112,10 +119,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUploadSuccess, defaultImage
       </div>
 
       {error && (
-        <p className="text-red-400 text-[10px] font-black uppercase text-center">{error}</p>
+        <p className="text-red-400 text-[10px] font-black uppercase text-center bg-red-400/10 p-2 rounded-lg border border-red-400/20">{error}</p>
       )}
 
-      {preview && !isUploading && (
+      {preview && !isUploading && !error && (
         <div className="flex items-center justify-center gap-2 text-green-400">
           <CheckCircle2 size={14} />
           <span className="text-[10px] font-black uppercase tracking-widest">Upload Concluído com Sucesso</span>
